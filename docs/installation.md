@@ -54,6 +54,7 @@ To stop nextflow from looking for updates online, you can tell it to run in offl
 
 ```bash
 export NXF_OFFLINE='TRUE'
+source ~/.bashrc        # to load the new changes into your current shell
 ```
 
 #### 2.3) Development
@@ -107,7 +108,7 @@ To use it first ensure that you have conda installed (we recommend [miniconda](h
 #### Running on UPPMAX
 To run the pipeline on the [Swedish UPPMAX](https://www.uppmax.uu.se/) clusters (`rackham`, `irma`, `bianca` etc), use the command line flag `-profile uppmax`. This tells Nextflow to submit jobs using the SLURM job executor with Singularity for software dependencies.
 
-Note that you will need to specify your UPPMAX project ID when running a pipeline. To do this, use the command line flag `--project <project_ID>`. The pipeline will exit with an error message if you try to run it pipeline with the default UPPMAX config profile without a project.
+Note that you will need to specify your UPPMAX project ID when running a pipeline. To do this, use the command line flag `--project <project_ID>`. The pipeline will exit with an error message if you try to run it as the default UPPMAX config profile without a project.
 
 **Optional Extra:** To avoid having to specify your project every time you run Nextflow, you can add it to your personal Nextflow config file instead. Add this line to `~/.nextflow/config`:
 
