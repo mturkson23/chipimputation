@@ -19,7 +19,7 @@ cache: pip
 #
 install:
   # Install Nextflow
-  # - sudo apt-get -qq update
+  - sudo apt-get -qq update
   - curl -fsSL get.nextflow.io | bash 
   - mkdir -p ~/bin; cp nextflow ~/bin
   # Install nf-core/tools
@@ -35,7 +35,7 @@ addons:
     update: true
 #
 env:
-  - NXF_VER='' # Specify a minimum NF version that should be tested and work
+  - NXF_VER='19.07.0' # Specify a minimum NF version that should be tested and work
 #  - NXF_VER='' # Plus: get the latest NF version and check, that it works
 #
 script:
