@@ -1,11 +1,11 @@
-#sudo: required
-#language: java
-#jdk: openjdk8
-#services:
-#  - docker
-#python:
-#  - "2.7"
-#cache: pip
+sudo: required
+language: java
+jdk: openjdk8
+services:
+  - singularity
+python:
+  - "2.7"
+cache: pip
 #matrix:
 #  fast_finish: true
 #
@@ -17,30 +17,31 @@
 #  # Fake the tag locally so that the pipeline runs properly
 #  - docker tag nfcore/imp nfcore/imp:latest
 #
-#install:
-#  # Install Nextflow
-#  - mkdir /tmp/nextflow
-#  - cd /tmp/nextflow
-#  - wget -qO- get.nextflow.io | bash
-#  - sudo ln -s /tmp/nextflow/nextflow /usr/local/bin/nextflow
-#  # Install nf-core/tools
-#  - git clone https://github.com/nf-core/tools.git /tmp/nf-core-tools
-#  - cd /tmp/nf-core-tools
-#  - pip install --user -e .
+install:
+  # Install Nextflow
+  - mkdir /tmp/nextflow
+  - cd /tmp/nextflow
+  - wget -qO- get.nextflow.io | bash
+  - sudo ln -s /tmp/nextflow/nextflow /usr/local/bin/nextflow
+  # Install nf-core/tools
+  #- git clone https://github.com/nf-core/tools.git /tmp/nf-core-tools
+  #- cd /tmp/nf-core-tools
+  #- pip install --user -e .
 #  # Reset
 #  - mkdir ${TRAVIS_BUILD_DIR}/tests
 #  - cd ${TRAVIS_BUILD_DIR}/tests
 #
-#addons:
-#  apt:
-#    update: true
+addons:
+  apt:
+    update: true
 #
-#env:
-#  - NXF_VER=0.30.0 # Specify a minimum NF version that should be tested and work
-#  - NXF_VER='' # Plus: get the latest NF version and check, that it works
+env:
+  - NXF_VER=0.30.0 # Specify a minimum NF version that should be tested and work
+  - NXF_VER='' # Plus: get the latest NF version and check, that it works
 #
-#script:
-#  # Lint the pipeline code
-#  - nf-core lint ${TRAVIS_BUILD_DIR}
-#  # Run the pipeline with the test profile
-#  - nextflow run ${TRAVIS_BUILD_DIR} -profile test,docker
+script:
+  # Lint the pipeline code
+  - nf-core lint ${TRAVIS_BUILD_DIR}
+  # Run the pipeline with the test profile
+  - nextflow run ${TRAVIS_BUILD_DIR} -r master -profile test,singularity
+
