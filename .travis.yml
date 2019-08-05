@@ -36,12 +36,12 @@ addons:
     update: true
 #
 env:
-  - NXF_VER=0.30.0 # Specify a minimum NF version that should be tested and work
+  - NXF_VER=1.0.0 # Specify a minimum NF version that should be tested and work
 #  - NXF_VER='' # Plus: get the latest NF version and check, that it works
 #
 script:
   # Lint the pipeline code
   #- nf-core lint ${TRAVIS_BUILD_DIR}
   # Run the pipeline with the test profile
-  - nextflow run ${TRAVIS_BUILD_DIR} -r master -profile test,singularity
+  - nextflow run h3abionet/chipimputation -r master -profile test,singularity
 
