@@ -29,6 +29,9 @@ install:
   # Install markdownlint-cli
   - sudo apt-get install npm && npm install -g markdownlint-cli
   
+  # Install libarchive for ubuntu environment before Singularity
+  - sudo apt install libarchive-dev  
+  
   # Install singularity
   - mkdir /tmp/singularity
   - cd /tmp/singularity
@@ -38,9 +41,6 @@ install:
   - ./configure --prefix=/usr/local
   - make
   - sudo make install
-  
-  # Install libarchive for ubuntu environment
-  - sudo apt install libarchive-dev
 
 env:
   - NXF_VER=19.04.1 # Specify a minimum NF version that should be tested and work
