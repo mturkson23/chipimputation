@@ -30,7 +30,7 @@ install:
   - sudo apt-get install npm && npm install -g markdownlint-cli
   
   # Install libarchive for ubuntu environment before Singularity
-  - sudo apt install libarchive-dev  
+  - sudo apt-get install libarchive-dev  
   
   # Install singularity
   - mkdir /tmp/singularity
