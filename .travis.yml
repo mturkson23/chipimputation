@@ -28,9 +28,19 @@ install:
   - mkdir ${TRAVIS_BUILD_DIR}/tests && cd ${TRAVIS_BUILD_DIR}/tests
   # Install markdownlint-cli
   - sudo apt-get install npm && npm install -g markdownlint-cli
+  
+  # Install singularity
+  - mkdir /tmp/singularity
+  - cd /tmp/singularity
+  - wget https://github.com/singularityware/singularity/releases/download/2.5.2/singularity-2.5.2.tar.gz
+  - tar xvf singularity-2.5.2.tar.gz
+  - cd singularity-2.5.2
+  - ./configure --prefix=/usr/local
+  - make
+  - sudo make install
 
 env:
-  - NXF_VER=18.10.1 # Specify a minimum NF version that should be tested and work
+  - NXF_VER=19.04.1 # Specify a minimum NF version that should be tested and work
 #   - NXF_VER='19.01.0' # Plus: get the latest NF version and check, that it works
 
 script:
