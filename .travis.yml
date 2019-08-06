@@ -3,51 +3,30 @@ language: python
 jdk: openjdk8
 services: docker
 python: '3.6'
-# cache: pip
 matrix:
   fast_finish: true
-
-# before_install:
-#   # PRs to master are only ok if coming from dev branch
-#   - '[ $TRAVIS_PULL_REQUEST = "false" ] || [ $TRAVIS_BRANCH != "master" ] || ([ $TRAVIS_PULL_REQUEST_SLUG = $TRAVIS_REPO_SLUG ] && [ $TRAVIS_PULL_REQUEST_BRANCH = "dev" ])'
-#   # Pull the docker image first so the test doesn't wait for this
-#   - docker pull nfcore/ampliseq:dev
-#   # Fake the tag locally so that the pipeline runs properly
-#   - docker tag nfcore/ampliseq:dev nfcore/ampliseq:1.1.0
-
 install:
-  # Install Nextflow
-  - mkdir /tmp/nextflow
-  - cd /tmp/nextflow
-  - wget -qO- get.nextflow.io | bash
-  - sudo ln -s /tmp/nextflow/nextflow /usr/local/bin/nextflow
-  # Install nf-core/tools
-  - pip install --upgrade pip
-  - pip install nf-core
-  # Reset
-  - mkdir ${TRAVIS_BUILD_DIR}/tests && cd ${TRAVIS_BUILD_DIR}/tests
-  # Install markdownlint-cli
-  - sudo apt-get install npm && npm install -g markdownlint-cli
-  
-  # Install libarchive for ubuntu environment before Singularity
-  - sudo apt-get install libarchive-dev  
-  
-  # Install singularity
-  - mkdir /tmp/singularity
-  - cd /tmp/singularity
-  - wget https://github.com/singularityware/singularity/releases/download/2.5.2/singularity-2.5.2.tar.gz
-  - tar xvf singularity-2.5.2.tar.gz
-  - cd singularity-2.5.2
-  - ./configure --prefix=/usr/local
-  - make
-  - sudo make install
-
+- mkdir /tmp/nextflow
+- cd /tmp/nextflow
+- wget -qO- get.nextflow.io | bash
+- sudo ln -s /tmp/nextflow/nextflow /usr/local/bin/nextflow
+- pip install --upgrade pip
+- pip install nf-core
+- mkdir ${TRAVIS_BUILD_DIR}/tests && cd ${TRAVIS_BUILD_DIR}/tests
+- sudo apt-get install npm && npm install -g markdownlint-cli
+- sudo apt-get install libarchive-dev
+- mkdir /tmp/singularity
+- cd /tmp/singularity
+- wget https://github.com/singularityware/singularity/releases/download/2.5.2/singularity-2.5.2.tar.gz
+- tar xvf singularity-2.5.2.tar.gz
+- cd singularity-2.5.2
+- "./configure --prefix=/usr/local"
+- make
+- sudo make install
 env:
-  - NXF_VER=19.04.1 # Specify a minimum NF version that should be tested and work
-#   - NXF_VER='19.01.0' # Plus: get the latest NF version and check, that it works
-
+  matrix:
+  - NXF_VER=19.04.1
+  global:
+    secure: eJq3JN+G/ikeMUsdHtGAdjRw1MEErEONI+kgSI8w8dErNDLO8ce49KLuY9JA1rc/+4PC9Fy6TAo/p0SD9iKHzJqZm10G+NLxzthX3oRgH1GmHVER8hoFqByg7B//NUfQtqFjKxG2LnYo5TJtZPq1UzTBYj+W/qBAyWSvL5retdaAx5D8omAncGD1IrxmxVrC/3Kp9T/qUZ42zzM1zaLb13ZRpVB2kjWsx4R24fEhWCkcNpwwHBfiHwg5CragiYu+c+XS1HDZNBjhkO09Q0A+k7qmj72lq9yPIEeoOsiPaWp6FqUVuezTk+bp51SlrXxhvP/1cQsjrTma4HLoGJhrfZtVOYRv1svTzstWIr2BXvKlr9Ek6i8L4KoAZqEWTcrSZl1TbxfXH4N6E0dsQkwlrMyISQh64OaZ2+Z1L+sfeDavIySJShw/5qjK9qbeExwmgO99M1mmQp/GgjqS7vmhUKNZlY+CHL5NMQUbc20D72ebHatY7EWYCVpdq5wogGy0GvNr/U/FN7GInkOxplDpG1aj940i+Rkf+1MU3yIYQymsfogUk1Q/0Iu0p3k7us5cZQXQmPH8kxYaxx2IUjubOb3gKzSsfVHMCDLy0eiA1On+tSariEtb50aFJ8C6qk9NXlDlG65TFbpBgP8sWBp/8eKO8+EzurljQP/AnAm9MBU=
 script:
-  # Lint the pipeline code
-  #- nf-core lint ${TRAVIS_BUILD_DIR}
-  # Run the pipeline with the test profile
-  - nextflow run mturkson23/chipimputation -r master -profile test,singularity
+- nextflow run mturkson23/chipimputation -r master -profile test,singularity
