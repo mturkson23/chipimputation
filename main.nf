@@ -7,14 +7,11 @@
  h3achipimputation imputation pipeline.
 ----------------------------------------------------------------------------------------
  @Authors
-
 ----------------------------------------------------------------------------------------
  @Homepage / @Documentation
   https://github.com/h3abionet/chipimputation
 ----------------------------------------------------------------------------------------
-
 ----------------------------------------------------------------------------------------
-
 ================================================================================
 =                           C O N F I G U R A T I O N                          =
 ================================================================================
@@ -98,9 +95,7 @@ Channel
 // Header log info
 log.info """
 =======================================================
-
 h3achipimputation v${params.version}"
-
 ======================================================="""
 def summary = [:]
 summary['Pipeline Name']    = 'h3achipimputation'
@@ -179,15 +174,15 @@ ${summary.collect { k,v -> "            <dt>$k</dt><dd><samp>${v ?: '<span style
 process check_chromosome {
     tag "check_chromosome_${target_name}"
     input:
-        set target_name, file(target_vcfFile) from target_datasets
+    set target_name, file(target_vcfFile) from target_datasets
     output:
-        set target_name, file(chromFile) into check_chromosome
-        set target_name, file(target_vcfFile), file(mapFile) into mapFile_cha,mapFile_cha_1
+    set target_name, file(chromFile) into check_chromosome
+    set target_name, file(target_vcfFile), file(mapFile) into mapFile_cha,mapFile_cha_1
     script:
-        base = file(target_vcfFile.baseName).baseName
-        chromFile = "${base}_chromosomes.txt"
-        mapFile = "${base}.map"
-        """
+    base = file(target_vcfFile.baseName).baseName
+    chromFile = "${base}_chromosomes.txt"
+    mapFile = "${base}.map"
+    """
         zcat ${target_vcfFile} | grep -v "^#" | awk -F' ' '{print \$1}' | sort -n | uniq >  ${chromFile}
         zcat ${target_vcfFile} | grep -v "^#" | awk -F' ' '{print \$1"\t"\$2"\t"\$3"\t"\$4"\t"\$5}' | sort -n | uniq > ${mapFile}
         """
@@ -288,7 +283,7 @@ targets_toImpute = Channel.from(targets_toImpute_list)
 
 println "|-- Chromosomes used: ${chromosomes.join(', ')}"
 if(params.chunk){
-        println "|-- Chunks to impute: ${(params.chunk.split(',')).join(', ')}"
+    println "|-- Chunks to impute: ${(params.chunk.split(',')).join(', ')}"
 }
 
 // check if ref files exist
@@ -309,12 +304,12 @@ process check_mismatch {
     label "medium"
     publishDir "${params.outDir}/reports/${target_name}", overwrite: true, mode:'copy', pattern: "*checkRef_*.log*"
     input:
-        set target_name, file(target_vcfFile), file(mapFile), file(reference_genome) from targets_toImpute
+    set target_name, file(target_vcfFile), file(mapFile), file(reference_genome) from targets_toImpute
     output:
-        set target_name, file(target_vcfFile), file(mapFile), file("${base}_checkRef_warn.log"), file("${base}_checkRef_summary.log") into check_mismatch
+    set target_name, file(target_vcfFile), file(mapFile), file("${base}_checkRef_warn.log"), file("${base}_checkRef_summary.log") into check_mismatch
     script:
-        base = file(target_vcfFile.baseName).baseName
-        """
+    base = file(target_vcfFile.baseName).baseName
+    """
         samtools faidx ${reference_genome}
         nblines=\$(zcat ${target_vcfFile} | wc -l)
         if (( \$nblines > 1 ))
@@ -362,15 +357,15 @@ process generate_chunks {
     publishDir "${params.outDir}/reports/${target_name}", overwrite: true, mode:'copy'
     label "small"
     input:
-        set target_name, file(target_vcfFile), file(mapFile), file(mismatch_warn), file(mismatch_summary), chrms from check_mismatch_noMis
+    set target_name, file(target_vcfFile), file(mapFile), file(mismatch_warn), file(mismatch_summary), chrms from check_mismatch_noMis
     output:
-        set target_name, file(chunkFile) into generate_chunks
+    set target_name, file(chunkFile) into generate_chunks
     script:
-        if(params.chunk){chunk = params.chunk} else{chunk=''}
-        chromosomes = chrms.join(',')
-        chunkFile = "chunks.txt"
-        chunk_size = params.chunk_size
-        template "generate_chunks.py"
+    if(params.chunk){chunk = params.chunk} else{chunk=''}
+    chromosomes = chrms.join(',')
+    chunkFile = "chunks.txt"
+    chunk_size = params.chunk_size
+    template "generate_chunks.py"
 }
 
 
@@ -382,12 +377,12 @@ process target_qc {
     label "medium"
     publishDir "${params.outDir}/qc/${target_name}", overwrite: true, mode:'copy', pattern: "*clean.vcf.gz*"
     input:
-        set target_name, file(target_vcfFile), file(mapFile), file(mismatch_warn), file(mismatch_summary), chrms from check_mismatch_noMis_1
+    set target_name, file(target_vcfFile), file(mapFile), file(mismatch_warn), file(mismatch_summary), chrms from check_mismatch_noMis_1
     output:
-        set target_name, file("${base}_clean.vcf.gz") into target_qc
+    set target_name, file("${base}_clean.vcf.gz") into target_qc
     script:
-        base = file(target_vcfFile.baseName).baseName
-        """
+    base = file(target_vcfFile.baseName).baseName
+    """
         bcftools view \
             -i 'ALT="."' ${target_vcfFile} | \
         bcftools query \
@@ -444,16 +439,16 @@ process split_target_to_chunk {
     tag "split_${target_name}_${chrm}:${chunk_start}-${chunk_end}"
     label "medium"
     input:
-        set chrm, chunk_start, chunk_end, target_name, file(target_vcfFile) from target_qc_chunk
+    set chrm, chunk_start, chunk_end, target_name, file(target_vcfFile) from target_qc_chunk
     output:
-        set chrm, chunk_start, chunk_end, target_name, file(target_vcfFile_chunk) into split_vcf_to_chrm
+    set chrm, chunk_start, chunk_end, target_name, file(target_vcfFile_chunk) into split_vcf_to_chrm
     script:
-        base = file(target_vcfFile.baseName).baseName
-        target_vcfFile_chunk = "${base}.chr${chrm}_${chunk_start}-${chunk_end}.vcf.gz"
-        start = chunk_start - params.buffer_size
-        if(chunk_start.toInteger() - params.buffer_size.toInteger() <= 0){ end = 1 }
-        end = chunk_end.toInteger() + params.buffer_size.toInteger()
-        """
+    base = file(target_vcfFile.baseName).baseName
+    target_vcfFile_chunk = "${base}.chr${chrm}_${chunk_start}-${chunk_end}.vcf.gz"
+    start = chunk_start - params.buffer_size
+    if(chunk_start.toInteger() - params.buffer_size.toInteger() <= 0){ end = 1 }
+    end = chunk_end.toInteger() + params.buffer_size.toInteger()
+    """
         bcftools index --tbi -f ${target_vcfFile}
         bcftools view \
             --regions ${chrm}:${start}-${end} \
@@ -484,12 +479,12 @@ process phase_target_chunk {
     tag "phase_${target_name}_${chrm}:${chunk_start}-${chunk_end}_${ref_name}"
     label "bigmem"
     input:
-        set chrm, chunk_start, chunk_end, target_name, file(target_vcfFile_chunk), ref_name, file(ref_vcf), file(ref_m3vcf), file(eagle_genetic_map) from target_qc_chunk_ref
+    set chrm, chunk_start, chunk_end, target_name, file(target_vcfFile_chunk), ref_name, file(ref_vcf), file(ref_m3vcf), file(eagle_genetic_map) from target_qc_chunk_ref
     output:
-        set chrm, chunk_start, chunk_end, target_name, file("${file_out}.vcf.gz"), ref_name, file(ref_vcf), file(ref_m3vcf) into phase_target
+    set chrm, chunk_start, chunk_end, target_name, file("${file_out}.vcf.gz"), ref_name, file(ref_vcf), file(ref_m3vcf) into phase_target
     script:
-        file_out = "${file(target_vcfFile_chunk.baseName).baseName}_${ref_name}-phased"
-        """
+    file_out = "${file(target_vcfFile_chunk.baseName).baseName}_${ref_name}-phased"
+    """
         nblines=\$(zcat ${target_vcfFile_chunk} | grep -v '^#' | wc -l)
         if (( \$nblines > 0 ))
         then
@@ -523,12 +518,12 @@ process impute_target {
     tag "imp_${target_name}_${chrm}:${chunk_start}-${chunk_end}_${ref_name}"
     label "bigmem"
     input:
-        set chrm, chunk_start, chunk_end, target_name, file(target_phased_vcfFile), ref_name, file(ref_vcf), file(ref_m3vcf) from phase_target
+    set chrm, chunk_start, chunk_end, target_name, file(target_phased_vcfFile), ref_name, file(ref_vcf), file(ref_m3vcf) from phase_target
     output:
-        set chrm, chunk_start, chunk_end, target_name, ref_name, file("${base}_imputed.dose.vcf.gz"), file("${base}_imputed.info") into impute_target
+    set chrm, chunk_start, chunk_end, target_name, ref_name, file("${base}_imputed.dose.vcf.gz"), file("${base}_imputed.info") into impute_target
     shell:
-        base = "${file(target_phased_vcfFile.baseName).baseName}"
-        """
+    base = "${file(target_phased_vcfFile.baseName).baseName}"
+    """
         nblines=\$(zcat ${target_phased_vcfFile} | grep -v '^#' | wc -l)
         if (( \$nblines > 0 ))
         then
@@ -585,12 +580,12 @@ process combineImpute {
     publishDir "${params.outDir}/imputed/${ref_name}", overwrite: true, mode:'symlink', pattern: '*imputed.gz'
     label "bigmem"
     input:
-        set target_name, ref_name, file(ref_vcf), chrm, file(imputed_files) from imputeCombine.values()
+    set target_name, ref_name, file(ref_vcf), chrm, file(imputed_files) from imputeCombine.values()
     output:
-        set target_name, ref_name, file(ref_vcf), chrm, file(comb_impute) into combineImpute
+    set target_name, ref_name, file(ref_vcf), chrm, file(comb_impute) into combineImpute
     script:
-        comb_impute = "${target_name}_${ref_name}_chr${chrm}.imputed.gz"
-        """
+    comb_impute = "${target_name}_${ref_name}_chr${chrm}.imputed.gz"
+    """
         bcftools concat \
             ${imputed_files} \
             -Oz -o ${target_name}.tmp.vcf.gz
@@ -610,12 +605,12 @@ process combineInfo {
     publishDir "${params.outDir}/imputed/${ref_name}", overwrite: true, mode:'copy', pattern: '*imputed_info'
     label "medium"
     input:
-        set target_name, ref_name, file(ref_vcf), chrm, file(info_files) from infoCombine.values()
+    set target_name, ref_name, file(ref_vcf), chrm, file(info_files) from infoCombine.values()
     output:
-        set target_name, ref_name, file(ref_vcf), chrm, file(comb_info) into combineInfo_frq
+    set target_name, ref_name, file(ref_vcf), chrm, file(comb_info) into combineInfo_frq
     script:
-        comb_info = "${target_name}_${ref_name}_chr${chrm}.imputed_info"
-        """
+    comb_info = "${target_name}_${ref_name}_chr${chrm}.imputed_info"
+    """
         head -n1 ${info_files[0]} > ${comb_info}
         tail -q -n +2 ${info_files.join(' ')} >> ${comb_info}
         """
@@ -630,13 +625,13 @@ process combineInfo_all {
     publishDir "${params.outDir}/imputed/${ref_name}", overwrite: true, mode:'copy', pattern: '*imputed_info'
     label "medium"
     input:
-        set target_name, ref_name, file(ref_vcf), file(info_files) from infoCombine_all.values()
+    set target_name, ref_name, file(ref_vcf), file(info_files) from infoCombine_all.values()
     output:
-        set target_name, ref_name, file(ref_vcf), file(comb_info) into combineInfo_all,combineInfo_all_frq
+    set target_name, ref_name, file(ref_vcf), file(comb_info) into combineInfo_all,combineInfo_all_frq
     script:
-        chrms = chromosomes_[target_name][0]+"-"+chromosomes_[target_name][-1]
-        comb_info = "${target_name}_${ref_name}_chrs${chrms}.imputed_info"
-        """
+    chrms = chromosomes_[target_name][0]+"-"+chromosomes_[target_name][-1]
+    comb_info = "${target_name}_${ref_name}_chrs${chrms}.imputed_info"
+    """
         head -n1 ${info_files[0]} > ${comb_info}
         tail -q -n +2 ${info_files.join(' ')} >> ${comb_info}
         """
@@ -672,18 +667,18 @@ process filter_info_target {
     publishDir "${params.outDir}/reports/${ref_panels}", overwrite: true, mode:'copy', pattern: "${comb_info}*"
     label "medium"
     input:
-        set target_name, ref_panels, ref_infos from target_infos.values()
+    set target_name, ref_panels, ref_infos from target_infos.values()
     output:
-        set target_name, ref_panels, file("${well_out}.tsv") into target_info_Well
-        set target_name, ref_panels, file("${acc_out}.tsv") into target_info_Acc,target_info_Acc_1
+    set target_name, ref_panels, file("${well_out}.tsv") into target_info_Well
+    set target_name, ref_panels, file("${acc_out}.tsv") into target_info_Acc,target_info_Acc_1
     script:
-        chrms = chromosomes_[target_name][0]+"-"+chromosomes_[target_name][-1]
-        comb_info = "${target_name}_${ref_panels}_${chrms}.imputed_info"
-        well_out = "${comb_info}_well_imputed"
-        acc_out = "${comb_info}_accuracy"
-        infos = ref_infos.join(',')
-        impute_info_cutoff = params.impute_info_cutoff
-        template "filter_info_minimac.py"
+    chrms = chromosomes_[target_name][0]+"-"+chromosomes_[target_name][-1]
+    comb_info = "${target_name}_${ref_panels}_${chrms}.imputed_info"
+    well_out = "${comb_info}_well_imputed"
+    acc_out = "${comb_info}_accuracy"
+    infos = ref_infos.join(',')
+    impute_info_cutoff = params.impute_info_cutoff
+    template "filter_info_minimac.py"
 }
 
 
@@ -697,14 +692,14 @@ process report_well_imputed_target {
     publishDir "${params.outDir}/reports/${ref_panels}", overwrite: true, mode:'copy'
     label "medium"
     input:
-        set target_name, ref_panels, file(inWell_imputed) from target_info_Well_1
+    set target_name, ref_panels, file(inWell_imputed) from target_info_Well_1
     output:
-        set target_name, ref_panels, file("${outWell_imputed}.tsv"), file("${outWell_imputed}_summary.tsv") into report_well_imputed_target
+    set target_name, ref_panels, file("${outWell_imputed}.tsv"), file("${outWell_imputed}_summary.tsv") into report_well_imputed_target
     script:
-        chrms = chromosomes_[target_name][0]+"-"+chromosomes_[target_name][-1]
-        outWell_imputed = "${target_name}_${ref_panels}_${chrms}.imputed_info_performance_by_maf_report"
-        group = "REF_PANEL"
-        template "report_well_imputed.py"
+    chrms = chromosomes_[target_name][0]+"-"+chromosomes_[target_name][-1]
+    outWell_imputed = "${target_name}_${ref_panels}_${chrms}.imputed_info_performance_by_maf_report"
+    group = "REF_PANEL"
+    template "report_well_imputed.py"
 }
 
 
@@ -715,17 +710,17 @@ process plot_performance_target{
     tag "plot_performance_dataset_${target_name}_${ref_panels}_${chrms}"
     publishDir "${params.outDir}/plots/${ref_panels}", overwrite: true, mode:'copy'
     input:
-        set target_name, ref_panels, file(well_imputed_report), file(well_imputed_report_summary) from report_well_imputed_target
+    set target_name, ref_panels, file(well_imputed_report), file(well_imputed_report_summary) from report_well_imputed_target
     output:
-        set target_name, ref_panels, file(plot_by_maf) into plot_performance_target
+    set target_name, ref_panels, file(plot_by_maf) into plot_performance_target
     script:
-        plot_by_maf = "${well_imputed_report.baseName}.tiff"
-        chrms = chromosomes_[target_name][0]+"-"+chromosomes_[target_name][-1]
-        report = well_imputed_report
-        group = "REF_PANEL"
-        xlab = "MAF bins"
-        ylab = "Number of well imputed SNPs"
-        template "plot_results_by_maf.R"
+    plot_by_maf = "${well_imputed_report.baseName}.tiff"
+    chrms = chromosomes_[target_name][0]+"-"+chromosomes_[target_name][-1]
+    report = well_imputed_report
+    group = "REF_PANEL"
+    xlab = "MAF bins"
+    ylab = "Number of well imputed SNPs"
+    template "plot_results_by_maf.R"
 }
 
 """
@@ -736,14 +731,14 @@ process report_accuracy_target {
     publishDir "${params.outDir}/reports/${ref_panels}/", overwrite: true, mode:'copy'
     label "medium"
     input:
-        set target_name, ref_panels, file(inSNP_acc) from target_info_Acc_1
+    set target_name, ref_panels, file(inSNP_acc) from target_info_Acc_1
     output:
-        set target_name, ref_panels, file(outSNP_acc) into report_SNP_acc_target
+    set target_name, ref_panels, file(outSNP_acc) into report_SNP_acc_target
     script:
-        chrms = chromosomes_[target_name][0]+"-"+chromosomes_[target_name][-1]
-        outSNP_acc = "${target_name}_${ref_panels}_${chrms}.imputed_info_report_accuracy.tsv"
-        group = "REF_PANEL"
-        template "report_accuracy_by_maf.py"
+    chrms = chromosomes_[target_name][0]+"-"+chromosomes_[target_name][-1]
+    outSNP_acc = "${target_name}_${ref_panels}_${chrms}.imputed_info_report_accuracy.tsv"
+    group = "REF_PANEL"
+    template "report_accuracy_by_maf.py"
 }
 
 
@@ -754,17 +749,17 @@ process plot_accuracy_target{
     tag "plot_accuracy_dataset_${target_name}_${ref_panels}_${chrms}"
     publishDir "${params.outDir}/plots/${ref_panels}", overwrite: true, mode:'copy'
     input:
-        set target_name, ref_panels, file(accuracy_report) from report_SNP_acc_target
+    set target_name, ref_panels, file(accuracy_report) from report_SNP_acc_target
     output:
-        set target_name, ref_panels, file(plot_by_maf) into plot_accuracy_target
+    set target_name, ref_panels, file(plot_by_maf) into plot_accuracy_target
     script:
-        plot_by_maf = "${accuracy_report.baseName}_accuracy_by_maf.tiff"
-        chrms = chromosomes_[target_name][0]+"-"+chromosomes_[target_name][-1]
-        report = accuracy_report
-        group = "REF_PANEL"
-        xlab = "MAF bins"
-        ylab = "Concordance rate"
-        template "plot_results_by_maf.R"
+    plot_by_maf = "${accuracy_report.baseName}_accuracy_by_maf.tiff"
+    chrms = chromosomes_[target_name][0]+"-"+chromosomes_[target_name][-1]
+    report = accuracy_report
+    group = "REF_PANEL"
+    xlab = "MAF bins"
+    ylab = "Concordance rate"
+    template "plot_results_by_maf.R"
 }
 
 
@@ -777,18 +772,18 @@ process filter_info_ref {
     label "bigmem"
     publishDir "${params.outDir}/reports/${ref_name}", overwrite: true, mode:'copy', pattern: "${comb_info}*"
     input:
-        set ref_name, target_names, target_infos from ref_infos.values()
+    set ref_name, target_names, target_infos from ref_infos.values()
     output:
-        set ref_name, target_names, file("${well_out}.tsv") into ref_info_Well
-        set ref_name, target_names, file("${acc_out}.tsv") into ref_info_Acc
+    set ref_name, target_names, file("${well_out}.tsv") into ref_info_Well
+    set ref_name, target_names, file("${acc_out}.tsv") into ref_info_Acc
     script:
-        chrms = chromosomes[0]+"-"+chromosomes[-1]
-        comb_info = "${ref_name}_${target_names}_${chrms}.imputed_info"
-        well_out = "${comb_info}_well_imputed"
-        acc_out = "${comb_info}_accuracy"
-        infos = file(target_infos.join(','))
-        impute_info_cutoff = params.impute_info_cutoff
-        template "filter_info_minimac.py"
+    chrms = chromosomes[0]+"-"+chromosomes[-1]
+    comb_info = "${ref_name}_${target_names}_${chrms}.imputed_info"
+    well_out = "${comb_info}_well_imputed"
+    acc_out = "${comb_info}_accuracy"
+    infos = file(target_infos.join(','))
+    impute_info_cutoff = params.impute_info_cutoff
+    template "filter_info_minimac.py"
 }
 
 
@@ -800,14 +795,14 @@ process report_well_imputed_ref {
     publishDir "${params.outDir}/reports/${ref_name}", overwrite: true, mode:'copy'
     label "medium"
     input:
-        set ref_name, target_names, file(inWell_imputed) from ref_info_Well
+    set ref_name, target_names, file(inWell_imputed) from ref_info_Well
     output:
-        set ref_name, target_names, file("${outWell_imputed}.tsv"), file("${outWell_imputed}_summary.tsv") into report_well_imputed_ref
+    set ref_name, target_names, file("${outWell_imputed}.tsv"), file("${outWell_imputed}_summary.tsv") into report_well_imputed_ref
     script:
-        chrms = chromosomes[0]+"-"+chromosomes[-1]
-        outWell_imputed = "${ref_name}_${target_names}_${chrms}.imputed_info_report_well_imputed"
-        group = "DATASET"
-        template "report_well_imputed.py"
+    chrms = chromosomes[0]+"-"+chromosomes[-1]
+    outWell_imputed = "${ref_name}_${target_names}_${chrms}.imputed_info_report_well_imputed"
+    group = "DATASET"
+    template "report_well_imputed.py"
 }
 
 
@@ -818,17 +813,17 @@ process plot_performance_ref{
     tag "plot_performance_dataset_${ref_name}_${target_names}_${chrms}"
     publishDir "${params.outDir}/plots/${ref_name}", overwrite: true, mode:'copy'
     input:
-        set ref_name, target_names, file(well_imputed_report), file(well_imputed_report_summary) from report_well_imputed_ref
+    set ref_name, target_names, file(well_imputed_report), file(well_imputed_report_summary) from report_well_imputed_ref
     output:
-        set ref_name, target_names, file(plot_by_maf) into plot_performance_ref
+    set ref_name, target_names, file(plot_by_maf) into plot_performance_ref
     script:
-        plot_by_maf = "${well_imputed_report.baseName}_performance_by_maf.tiff"
-        chrms = chromosomes[0]+"-"+chromosomes[-1]
-        report = well_imputed_report
-        group = "DATASET"
-        xlab = "MAF bins"
-        ylab = "Number of well imputed SNPs"
-        template "plot_results_by_maf.R"
+    plot_by_maf = "${well_imputed_report.baseName}_performance_by_maf.tiff"
+    chrms = chromosomes[0]+"-"+chromosomes[-1]
+    report = well_imputed_report
+    group = "DATASET"
+    xlab = "MAF bins"
+    ylab = "Number of well imputed SNPs"
+    template "plot_results_by_maf.R"
 }
 
 
@@ -840,14 +835,14 @@ process report_accuracy_ref {
     publishDir "${params.outDir}/reports/${ref_name}/", overwrite: true, mode:'copy'
     label "medium"
     input:
-        set ref_name, target_names, file(inSNP_acc) from ref_info_Acc
+    set ref_name, target_names, file(inSNP_acc) from ref_info_Acc
     output:
-        set ref_name, target_names, file(outSNP_acc) into report_SNP_acc_ref
+    set ref_name, target_names, file(outSNP_acc) into report_SNP_acc_ref
     script:
-        chrms = chromosomes[0]+"-"+chromosomes[-1]
-        outSNP_acc = "${ref_name}_${target_names}_${chrms}.imputed_info_report_accuracy.tsv"
-        group = "DATASET"
-        template "report_accuracy_by_maf.py"
+    chrms = chromosomes[0]+"-"+chromosomes[-1]
+    outSNP_acc = "${ref_name}_${target_names}_${chrms}.imputed_info_report_accuracy.tsv"
+    group = "DATASET"
+    template "report_accuracy_by_maf.py"
 }
 
 """
@@ -857,17 +852,17 @@ process plot_accuracy_ref{
     tag "plot_accuracy_dataset_${ref_name}_${target_names}_${chrms}"
     publishDir "${params.outDir}/plots/${ref_name}", overwrite: true, mode:'copy'
     input:
-        set ref_name, target_names, file(accuracy_report) from report_SNP_acc_ref
+    set ref_name, target_names, file(accuracy_report) from report_SNP_acc_ref
     output:
-        set ref_name, target_names, file(plot_by_maf) into plot_accuracy_ref
+    set ref_name, target_names, file(plot_by_maf) into plot_accuracy_ref
     script:
-        plot_by_maf = "${accuracy_report.baseName}_by_maf.tiff"
-        chrms = chromosomes[0]+"-"+chromosomes[-1]
-        report = accuracy_report
-        group = "REF_PANEL"
-        xlab = "MAF bins"
-        ylab = "Concordance rate"
-        template "plot_results_by_maf.R"
+    plot_by_maf = "${accuracy_report.baseName}_by_maf.tiff"
+    chrms = chromosomes[0]+"-"+chromosomes[-1]
+    report = accuracy_report
+    group = "REF_PANEL"
+    xlab = "MAF bins"
+    ylab = "Concordance rate"
+    template "plot_results_by_maf.R"
 }
 
 
@@ -880,13 +875,13 @@ process generate_frequency {
     publishDir "${params.outDir}/frqs/${ref_name}", overwrite: true, mode:'copy', pattern: '*frq'
     label "medium"
     input:
-        set target_name, ref_name, file(ref_vcf), chrm, file(impute_vcf) from combineImpute
+    set target_name, ref_name, file(ref_vcf), chrm, file(impute_vcf) from combineImpute
     output:
-        set target_name, ref_name, file(ref_vcf), chrm, file(dataset_frq), file(ref_frq) into frq_dataset,frq_dataset_info
+    set target_name, ref_name, file(ref_vcf), chrm, file(dataset_frq), file(ref_frq) into frq_dataset,frq_dataset_info
     script:
-        ref_frq = "${file(ref_vcf.baseName).baseName}.frq"
-        dataset_frq = "${file(impute_vcf.baseName).baseName}.frq"
-        """
+    ref_frq = "${file(ref_vcf.baseName).baseName}.frq"
+    dataset_frq = "${file(impute_vcf.baseName).baseName}.frq"
+    """
         # For datastet
         echo -e 'CHR\tPOS\tSNP\tREF\tALT\tAF' > ${dataset_frq}
         bcftools query -f '%CHROM\t%POS\t%CHROM\\_%POS\\_%REF\\_%ALT\t%REF\t%ALT\t%INFO/AF\\n' ${impute_vcf} >> ${dataset_frq}
@@ -908,14 +903,14 @@ process plot_r2_SNPpos {
     publishDir "${params.outDir}/plots/${ref_name}/r2_SNPpos", overwrite: true, mode:'copy'
     label "medium"
     input:
-        set target_name, ref_name, chrm, file(target_info), file(target_frq), file(ref_frq) from combineInfo_frq
+    set target_name, ref_name, chrm, file(target_info), file(target_frq), file(ref_frq) from combineInfo_frq
     output:
-        set target_name, ref_name, file(output) into plot_r2_SNPpos
+    set target_name, ref_name, file(output) into plot_r2_SNPpos
     script:
-        info = target_info
-        target = target_frq
-        output = "${target_name}_${ref_name}_${chrm}_r2_SNPpos.png"
-        template "r2_pos_plot.R"
+    info = target_info
+    target = target_frq
+    output = "${target_name}_${ref_name}_${chrm}_r2_SNPpos.png"
+    template "r2_pos_plot.R"
 }
 
 
@@ -927,16 +922,16 @@ process plot_freq_comparison {
     publishDir "${params.outDir}/plots/${ref_name}/freq_comparison", overwrite: true, mode:'copy'
     label "medium"
     input:
-        set target_name, ref_name, chrm, file(target_info), file(target_frq), file(ref_frq) from combineInfo_frq_comp
+    set target_name, ref_name, chrm, file(target_info), file(target_frq), file(ref_frq) from combineInfo_frq_comp
     output:
-        set target_name, ref_name, file(outputcolor) into plot_freq_comparison
+    set target_name, ref_name, file(outputcolor) into plot_freq_comparison
     script:
-        info = target_info
-        target = target_frq
-        frq = ref_frq
-        //output = "${target_name}_${ref_name}_${chrm}_freq_comparison.png"
-        outputcolor = "${target_name}_${ref_name}_${chrm}_freq_comparison_color.png"
-        template "AF_comparison.R"
+    info = target_info
+    target = target_frq
+    frq = ref_frq
+    //output = "${target_name}_${ref_name}_${chrm}_freq_comparison.png"
+    outputcolor = "${target_name}_${ref_name}_${chrm}_freq_comparison_color.png"
+    template "AF_comparison.R"
 }
 
 
@@ -948,15 +943,15 @@ process plot_r2_SNPcount {
     publishDir "${params.outDir}/plots/${ref_panels}", overwrite: true, mode:'copy'
     label "medium"
     input:
-        set target_name, ref_panels, infos from target_infos.values()
+    set target_name, ref_panels, infos from target_infos.values()
     output:
-        set target_name, ref_panels, file(plot_out) into plot_r2_SNPcount
+    set target_name, ref_panels, file(plot_out) into plot_r2_SNPcount
     script:
-        chrms = chromosomes_[target_name][0]+"-"+chromosomes_[target_name][-1]
-        plot_out = "${target_name}_${ref_panels}_${chrms}_r2_SNPcount.png"
-        infos = infos.join(',')
-        impute_info_cutoff = params.impute_info_cutoff
-        template "r2_Frequency_plot.R"
+    chrms = chromosomes_[target_name][0]+"-"+chromosomes_[target_name][-1]
+    plot_out = "${target_name}_${ref_panels}_${chrms}_r2_SNPcount.png"
+    infos = infos.join(',')
+    impute_info_cutoff = params.impute_info_cutoff
+    template "r2_Frequency_plot.R"
 }
 
 
@@ -968,15 +963,15 @@ process plot_hist_r2_SNPcount {
     publishDir "${params.outDir}/plots/${ref_panels}/", overwrite: true, mode:'copy'
     label "medium"
     input:
-        set target_name, ref_panels, infos from target_infos.values()
+    set target_name, ref_panels, infos from target_infos.values()
     output:
-        set target_name, ref_panels, file(plot_out) into plot_hist_r2_SNPcount
+    set target_name, ref_panels, file(plot_out) into plot_hist_r2_SNPcount
     script:
-        chrms = chromosomes_[target_name][0]+"-"+chromosomes_[target_name][-1]
-        plot_out = "${target_name}_${ref_panels}_${chrms}_r2_SNPcount_hist.png"
-        infos = infos.join(',')
-        impute_info_cutoff = params.impute_info_cutoff
-        template "r2_Frequency_plot_histogram.R"
+    chrms = chromosomes_[target_name][0]+"-"+chromosomes_[target_name][-1]
+    plot_out = "${target_name}_${ref_panels}_${chrms}_r2_SNPcount_hist.png"
+    infos = infos.join(',')
+    impute_info_cutoff = params.impute_info_cutoff
+    template "r2_Frequency_plot_histogram.R"
 }
 
 
@@ -988,17 +983,125 @@ process plot_MAF_r2 {
     publishDir "${params.outDir}/plots/${ref_panels}", overwrite: true, mode:'copy'
     label "medium"
     input:
-        set target_name, ref_panels, infos from target_infos.values()
+    set target_name, ref_panels, infos from target_infos.values()
     output:
-        set target_name, ref_panels, file(plot_out) into plot_MAF_r2
+    set target_name, ref_panels, file(plot_out) into plot_MAF_r2
     script:
-        chrms = chromosomes_[target_name][0]+"-"+chromosomes_[target_name][-1]
-        plot_out = "${target_name}_${ref_panels}_${chrms}_MAF_r2.png"
-        infos = infos.join(',')
-        impute_info_cutoff = params.impute_info_cutoff
-        template "Frequency_r2_MAF_plot.R"
+    chrms = chromosomes_[target_name][0]+"-"+chromosomes_[target_name][-1]
+    plot_out = "${target_name}_${ref_panels}_${chrms}_MAF_r2.png"
+    infos = infos.join(',')
+    impute_info_cutoff = params.impute_info_cutoff
+    template "Frequency_r2_MAF_plot.R"
 }
 
+/*
+ * Completion e-mail notification
+ */
+workflow.onComplete {
+    // Set up the e-mail variables
+    def subject = "[nf-core/blank] Successful: $workflow.runName"
+    if(!workflow.success){
+        subject = "[nf-core/blank] FAILED: $workflow.runName"
+    }
+    def email_fields = [:]
+    email_fields['version'] = workflow.manifest.version
+    email_fields['runName'] = custom_runName ?: workflow.runName
+    email_fields['success'] = workflow.success
+    email_fields['dateComplete'] = workflow.complete
+    email_fields['duration'] = workflow.duration
+    email_fields['exitStatus'] = workflow.exitStatus
+    email_fields['errorMessage'] = (workflow.errorMessage ?: 'None')
+    email_fields['errorReport'] = (workflow.errorReport ?: 'None')
+    email_fields['commandLine'] = workflow.commandLine
+    email_fields['projectDir'] = workflow.projectDir
+    email_fields['summary'] = summary
+    email_fields['summary']['Date Started'] = workflow.start
+    email_fields['summary']['Date Completed'] = workflow.complete
+    email_fields['summary']['Pipeline script file path'] = workflow.scriptFile
+    email_fields['summary']['Pipeline script hash ID'] = workflow.scriptId
+    if(workflow.repository) email_fields['summary']['Pipeline repository Git URL'] = workflow.repository
+    if(workflow.commitId) email_fields['summary']['Pipeline repository Git Commit'] = workflow.commitId
+    if(workflow.revision) email_fields['summary']['Pipeline Git branch/tag'] = workflow.revision
+    if(workflow.container) email_fields['summary']['Docker image'] = workflow.container
+    email_fields['summary']['Nextflow Version'] = workflow.nextflow.version
+    email_fields['summary']['Nextflow Build'] = workflow.nextflow.build
+    email_fields['summary']['Nextflow Compile Timestamp'] = workflow.nextflow.timestamp
+
+    // TODO nf-core: If not using MultiQC, strip out this code (including params.maxMultiqcEmailFileSize)
+    // On success try attach the multiqc report
+    def mqc_report = null
+    try {
+        if (workflow.success) {
+            mqc_report = multiqc_report.getVal()
+            if (mqc_report.getClass() == ArrayList){
+                log.warn "[nf-core/blank] Found multiple reports from process 'multiqc', will use only one"
+                mqc_report = mqc_report[0]
+            }
+        }
+    } catch (all) {
+        log.warn "[nf-core/blank] Could not attach MultiQC report to summary email"
+    }
+
+    // Render the TXT template
+    def engine = new groovy.text.GStringTemplateEngine()
+    def tf = new File("$baseDir/assets/email_template.txt")
+    def txt_template = engine.createTemplate(tf).make(email_fields)
+    def email_txt = txt_template.toString()
+
+    // Render the HTML template
+    def hf = new File("$baseDir/assets/email_template.html")
+    def html_template = engine.createTemplate(hf).make(email_fields)
+    def email_html = html_template.toString()
+
+    // Render the sendmail template
+    def smail_fields = [ email: params.email, subject: subject, email_txt: email_txt, email_html: email_html, baseDir: "$baseDir", mqcFile: mqc_report/*, mqcMaxSize: params.maxMultiqcEmailFileSize.toBytes() */]
+    def sf = new File("$baseDir/assets/sendmail_template.txt")
+    def sendmail_template = engine.createTemplate(sf).make(smail_fields)
+    def sendmail_html = sendmail_template.toString()
+
+    // // Send the HTML e-mail
+    // if (params.email) {
+    //     try {
+    //       if( params.plaintext_email ){ throw GroovyException('Send plaintext e-mail, not HTML') }
+    //       // Try to send HTML e-mail using sendmail
+    //       [ 'sendmail', '-t' ].execute() << sendmail_html
+    //       log.info "[nf-core/blank] Sent summary e-mail to $params.email (sendmail)"
+    //     } catch (all) {
+    //       // Catch failures and try with plaintext
+    //       [ 'mail', '-s', subject, params.email ].execute() << email_txt
+    //       log.info "[nf-core/blank] Sent summary e-mail to $params.email (mail)"
+    //     }
+    // }
+
+    // Write summary e-mail HTML to a file
+    def output_d = new File( "${params.outDir}/pipeline_info/" )
+    if( !output_d.exists() ) {
+        output_d.mkdirs()
+    }
+    def output_hf = new File( output_d, "pipeline_report.html" )
+    output_hf.withWriter { w -> w << email_html }
+    def output_tf = new File( output_d, "pipeline_report.txt" )
+    output_tf.withWriter { w -> w << email_txt }
+
+    c_reset = params.monochrome_logs ? '' : "\033[0m";
+    c_purple = params.monochrome_logs ? '' : "\033[0;35m";
+    c_green = params.monochrome_logs ? '' : "\033[0;32m";
+    c_red = params.monochrome_logs ? '' : "\033[0;31m";
+
+    if (workflow.stats.ignoredCountFmt > 0 && workflow.success) {
+        log.info "${c_purple}Warning, pipeline completed, but with errored process(es) ${c_reset}"
+        log.info "${c_red}Number of ignored errored process(es) : ${workflow.stats.ignoredCountFmt} ${c_reset}"
+        log.info "${c_green}Number of successfully ran process(es) : ${workflow.stats.succeedCountFmt} ${c_reset}"
+    }
+
+    if(workflow.success){
+        log.info "${c_purple}[nf-core/blank]${c_green} Pipeline completed successfully${c_reset}"
+    } else {
+        checkHostname()
+        log.info "${c_purple}[nf-core/blank]${c_red} Pipeline completed with errors${c_reset}"
+    }
+
+}
 
 def helpMessage() {
     log.info"""
@@ -1006,18 +1109,14 @@ def helpMessage() {
     h3achipimputation v${params.version}
     =========================================
     Usage:
-
     The typical command for running the pipeline is as follows:
-
     nextflow run h3abionet/chipimputation --reads '*_R{1,2}.fastq.gz' -profile standard,docker
-
     Mandatory arguments (Must be specified in the configuration file, and must be surrounded with quotes):
       --target_datasets             Path to input study data (Can be one ou multiple for multiple runs)
       --genome                      Human reference genome for checking REF mismatch
       --ref_panels                  Reference panels to impute to (Can be one ou multiple for multiple runs)
       -profile                      Configuration profile to use. Can use multiple (comma separated)
                                     Available: standard, conda, docker, singularity, test
-
     Other options:
       --outDir                      The output directory where the results will be saved
       --email                       Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits
