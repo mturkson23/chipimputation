@@ -3,7 +3,7 @@ language: python
 jdk: openjdk8
 services: docker
 python: '3.6'
-cache: pip
+# cache: pip
 matrix:
   fast_finish: true
 
@@ -50,4 +50,4 @@ script:
   # Lint the pipeline code
   #- nf-core lint ${TRAVIS_BUILD_DIR}
   # Run the pipeline with the test profile
-  - nextflow run h3abionet/chipimputation -r master -profile test,singularity
+  - nextflow run mturkson23/chipimputation -r master -profile test,singularity
