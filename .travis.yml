@@ -5,7 +5,5 @@ services:
 install:
 - sudo apt-get -qq update
 - sudo apt-get -qq -y install graphviz realpath
-- curl -fsSL get.nextflow.io | bash
+- wget -qO- get.nextflow.io | bash
 - docker pull nextflow/examples
-script: 
-- nextflow run h3abionet/chipimputation -r master -profile test,singularity
