@@ -20,7 +20,7 @@ install:
 - cd /tmp/singularity
 # - wget https://github.com/singularityware/singularity/releases/download/2.5.2/singularity-2.5.2.tar.gz
 - wget https://github.com/sylabs/singularity/releases/download/v3.3.0/singularity-3.3.0.tar.gz
-- tar xvf singularity-3.3.0.tar.gz
+- tar xf singularity-3.3.0.tar.gz
 - cd singularity-3.3.0
 - "./configure --prefix=/usr/local"
 - make
